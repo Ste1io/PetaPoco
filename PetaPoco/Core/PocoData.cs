@@ -252,7 +252,11 @@ namespace PetaPoco.Core
                             if (valuegetter != null && valuegetter.ReturnType == srcType &&
                                 (valuegetter.ReturnType == dstType || valuegetter.ReturnType == Nullable.GetUnderlyingType(dstType)))
                             {
-                                il.Emit(OpCodes.Ldarg_0); // *,rdr
+                                var valuesetter = pc.PropertyInfo.GetSetMethod(true);
+				if valuesetter == null
+				    throw new InvalidOperationException(pc.PropertyInfo.Name + " is either missing a Set method, or the Set method is readonly");
+				
+				il.Emit(OpCodes.Ldarg_0); // *,rdr
                                 il.Emit(OpCodes.Ldc_I4, i); // *,rdr,i
                                 il.Emit(OpCodes.Callvirt, valuegetter); // *,value
 
@@ -262,7 +266,7 @@ namespace PetaPoco.Core
                                     il.Emit(OpCodes.Newobj, dstType.GetConstructor(new Type[] { Nullable.GetUnderlyingType(dstType) }));
                                 }
 
-                                il.Emit(OpCodes.Callvirt, pc.PropertyInfo.GetSetMethod(true)); // poco
+                                il.Emit(OpCodes.Callvirt, valuesetter); // poco
                                 Handled = true;
                             }
                         }
