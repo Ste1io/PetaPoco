@@ -253,7 +253,7 @@ namespace PetaPoco.Core
                                 (valuegetter.ReturnType == dstType || valuegetter.ReturnType == Nullable.GetUnderlyingType(dstType)))
                             {
                                 var valuesetter = pc.PropertyInfo.GetSetMethod(true);
-                                if valuesetter == null
+                                if (valuesetter == null)
                                     throw new InvalidOperationException(pc.PropertyInfo.Name + " is either missing a Set method, or the Set method is readonly");
 
                                 il.Emit(OpCodes.Ldarg_0); // *,rdr
