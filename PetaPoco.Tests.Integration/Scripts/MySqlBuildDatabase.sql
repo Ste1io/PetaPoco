@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS `TransactionLogs`;
 DROP TABLE IF EXISTS `Note`;
 
 CREATE TABLE `People` (
-	`Id` VARCHAR(36) NOT NULL PRIMARY KEY, 
+	`Id` VARCHAR(36) NOT NULL PRIMARY KEY,
 	`FullName` VARCHAR(255),
 	`Age` BIGINT NOT NULL,
 	`Height` INT NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE `OrderLines` (
 ) ENGINE=INNODB;
 
 CREATE TABLE `SpecificPeople` (
-	`Id` VARCHAR(36) NOT NULL PRIMARY KEY, 
+	`Id` VARCHAR(36) NOT NULL PRIMARY KEY,
 	`FullName` VARCHAR(255),
 	`Age` BIGINT NOT NULL,
 	`Height` INT NOT NULL,
@@ -91,6 +91,12 @@ CREATE TABLE `BugInvestigation_3F489XV0` (
 	`TC4` INT NOT NULL
 ) ENGINE=INNODB;
 
+DROP TABLE IF EXISTS `BugInvestigation_670`;
+
+CREATE TABLE `BugInvestigation_670` (
+	`Id` INT 
+) ENGINE=INNODB;
+
 -- Stored Procedures
 DROP PROCEDURE IF EXISTS `SelectPeople`;
 DROP PROCEDURE IF EXISTS `SelectPeopleWithParam`;
@@ -106,14 +112,14 @@ CREATE PROCEDURE `SelectPeople` ()
 CREATE PROCEDURE `SelectPeopleWithParam` (age INT)
 	SELECT * FROM `People` WHERE `People`.`Age` > age;
 
-CREATE PROCEDURE `CountPeople` () 
+CREATE PROCEDURE `CountPeople` ()
 	SELECT COUNT(*) FROM `People`;
 
 CREATE PROCEDURE `CountPeopleWithParam` (age INT)
 	SELECT COUNT(*) FROM `People` WHERE `People`.`Age` > age;
 
-CREATE PROCEDURE `UpdatePeople` () 
-	UPDATE `People` SET `FullName` = 'Updated'; 
+CREATE PROCEDURE `UpdatePeople` ()
+	UPDATE `People` SET `FullName` = 'Updated';
 
 CREATE PROCEDURE `UpdatePeopleWithParam` (age INT)
 	UPDATE `People` SET `FullName` = 'Updated' WHERE `People`.`Age` > age;
