@@ -23,7 +23,15 @@ namespace PetaPoco
             _pd = new Lazy<PocoData>(() => PocoData.ForType(typeof(T), defaultMapper ?? _db.DefaultMapper));
         }
 
+        public PocoDataHelper(IDatabase database, object obj, string primaryKeyName, IMapper defaultMapper = null)
+        {
+            _db = database;
+            _pd = new Lazy<PocoData>(() => PocoData.ForObject(obj, primaryKeyName, defaultMapper ?? _db.DefaultMapper));
+        }
+
         public string EscapedTableName() => _db.Provider.EscapeTableName(PocoData.TableInfo.TableName);
+
+        public string EscapeTableName(string tableName) => _db.Provider.EscapeTableName(tableName);
 
         public string EscapedPrimaryKeyName() => _db.Provider.EscapeSqlIdentifier(PocoData.TableInfo.PrimaryKey);
 
@@ -36,6 +44,8 @@ namespace PetaPoco
                 _ => PocoData.Columns.Values.First(c => c.PropertyInfo.Name.Equals(propName)).ColumnName);
             return _columnNameCache.GetOrAdd(colName, _db.Provider.EscapeSqlIdentifier);
         }
+
+        public string EscapeColumnName(string columnName) => _db.Provider.EscapeSqlIdentifier(columnName);
     }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
