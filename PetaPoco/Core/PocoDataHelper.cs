@@ -50,7 +50,7 @@ namespace PetaPoco
             var colName = _propToColumnMap.GetOrAdd(propertyName,
                 _ => PocoData.Columns.Values.First(c => c.PropertyInfo.Name.Equals(propertyName)).ColumnName);
             return (escapeIdentifier.HasValue && escapeIdentifier.Value) || EscapeIdentifiers
-                ? _columnNameCache.GetOrAdd(colName, _db.Provider.EscapeSqlIdentifier)
+                ? _db.Provider.EscapeSqlIdentifier(_columnNameCache.GetOrAdd(colName, colName))
                 : _columnNameCache.GetOrAdd(colName, colName);
         }
 
