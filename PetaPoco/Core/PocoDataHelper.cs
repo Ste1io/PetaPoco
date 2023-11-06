@@ -15,6 +15,8 @@ namespace PetaPoco
         private readonly ConcurrentDictionary<string, string> _columnNameCache = new ConcurrentDictionary<string, string>();
         private readonly ConcurrentDictionary<string, string> _propToColumnMap = new ConcurrentDictionary<string, string>();
 
+        public bool EscapeIdentifiers { get; set; } = true;
+
         public PocoData PocoData => _pd.Value;
 
         public PocoDataHelper(IDatabase database, Type pocoType, IMapper defaultMapper = null)
@@ -23,21 +25,39 @@ namespace PetaPoco
             _pd = new Lazy<PocoData>(() => PocoData.ForType(pocoType, defaultMapper ?? _db.DefaultMapper));
         }
 
+        public PocoDataHelper(IDatabase database, Type pocoType, bool escapeIdentifiers, IMapper defaultMapper = null)
+            : this(database, pocoType, defaultMapper) => EscapeIdentifiers = escapeIdentifiers;
+
         public PocoDataHelper(IDatabase database, object pocoObject, string primaryKeyName, IMapper defaultMapper = null)
         {
             _db = database;
             _pd = new Lazy<PocoData>(() => PocoData.ForObject(pocoObject, primaryKeyName, defaultMapper ?? _db.DefaultMapper));
         }
 
-        public string EscapeTableName(string tableName) => _db.Provider.EscapeTableName(tableName);
+        public PocoDataHelper(IDatabase database, object pocoObject, string primaryKeyName, bool escapeIdentifiers, IMapper defaultMapper = null)
+            : this(database, pocoObject, primaryKeyName, defaultMapper) => EscapeIdentifiers = escapeIdentifiers;
 
-        public string EscapedPrimaryKeyName() => _db.Provider.EscapeSqlIdentifier(PocoData.TableInfo.PrimaryKey);
+        public string GetTableName(string tableName, bool? escapeIdentifier = null) => (escapeIdentifier.HasValue && escapeIdentifier.Value) || EscapeIdentifiers
+            ? _db.Provider.EscapeTableName(tableName)
+            : tableName;
 
-        public string EscapeColumnName(string propertyName)
+        public string GetKeyName(bool? escapeIdentifier = null) => (escapeIdentifier.HasValue && escapeIdentifier.Value) || EscapeIdentifiers
+            ? _db.Provider.EscapeSqlIdentifier(PocoData.TableInfo.PrimaryKey)
+            : PocoData.TableInfo.PrimaryKey;
+
+        public string GetColumnName(string propertyName, bool? escapeIdentifier = null)
         {
             var colName = _propToColumnMap.GetOrAdd(propertyName,
                 _ => PocoData.Columns.Values.First(c => c.PropertyInfo.Name.Equals(propertyName)).ColumnName);
-            return _columnNameCache.GetOrAdd(colName, _db.Provider.EscapeSqlIdentifier);
+            return (escapeIdentifier.HasValue && escapeIdentifier.Value) || EscapeIdentifiers
+                ? _columnNameCache.GetOrAdd(colName, _db.Provider.EscapeSqlIdentifier)
+                : _columnNameCache.GetOrAdd(colName, colName);
+        }
+
+        public void InvalidateCache()
+        {
+            _columnNameCache.Clear();
+            _propToColumnMap.Clear();
         }
     }
 
@@ -46,14 +66,17 @@ namespace PetaPoco
         public PocoDataHelper(IDatabase database, IMapper defaultMapper = null)
             : base(database, typeof(T), defaultMapper) { }
 
-        public string EscapedTableName() => EscapeTableName(PocoData.TableInfo.TableName);
+        public PocoDataHelper(IDatabase database, bool escapeIdentifiers, IMapper defaultMapper = null)
+            : base(database, typeof(T), escapeIdentifiers, defaultMapper) { }
 
-        public string EscapeColumnName(Expression<Func<T, object>> propertyExpression)
+        public string GetTableName(bool? escapeIdentifier = null) => GetTableName(PocoData.TableInfo.TableName, escapeIdentifier);
+
+        public string GetColumnName(Expression<Func<T, object>> propertyExpression, bool? escapeIdentifier = null)
         {
             var memberExpr = propertyExpression.Body as MemberExpression
                 ?? ((UnaryExpression)propertyExpression.Body).Operand as MemberExpression;
             var propName = memberExpr.Member.Name;
-            return EscapeColumnName(propName);
+            return GetColumnName(propName, escapeIdentifier);
         }
     }
 
