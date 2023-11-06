@@ -21,12 +21,12 @@ namespace PetaPoco.Tests.Integration.Databases.SQLite
         {
             AddPeople(1, 0);
 
-            var pd = PocoData.ForType(typeof(Person), DB.DefaultMapper);
-            var pdName = pd.Columns.Values.First(c => c.PropertyInfo.Name == "Name").ColumnName;
+            var pd = new PocoDataHelper<Person>(DB);
+            var pdName = pd.GetColumnName(c => c.Name);
 
             var sql = $@"SELECT *
-                         FROM {DB.Provider.EscapeTableName(pd.TableInfo.TableName)}
-                         WHERE {DB.Provider.EscapeSqlIdentifier(pdName)} LIKE @0 || '%';";
+                         FROM {pd.GetTableName()}
+                         WHERE {pdName} LIKE @0 || '%';";
 
             List<Person> result;
             using (var multi = DB.QueryMultiple(sql, "Peta"))
@@ -47,15 +47,15 @@ namespace PetaPoco.Tests.Integration.Databases.SQLite
         {
             AddOrders(1);
 
-            var pd = PocoData.ForType(typeof(Person), DB.DefaultMapper);
-            var od = PocoData.ForType(typeof(Order), DB.DefaultMapper);
-            var pdId = pd.Columns.Values.First(c => c.PropertyInfo.Name == "Id").ColumnName;
-            var pdName = pd.Columns.Values.First(c => c.PropertyInfo.Name == "Name").ColumnName;
-            var odPersonId = od.Columns.Values.First(c => c.PropertyInfo.Name == "PersonId").ColumnName;
+            var pd = new PocoDataHelper<Person>(DB);
+            var od = new PocoDataHelper<Order>(DB);
+            var pdId = pd.GetKeyName();
+            var pdName = pd.GetColumnName(c => c.Name);
+            var odPersonId = od.GetColumnName(c => c.PersonId);
 
-            var sql = $@"SELECT * FROM {DB.Provider.EscapeTableName(od.TableInfo.TableName)} o
-                         INNER JOIN {DB.Provider.EscapeTableName(pd.TableInfo.TableName)} p ON p.{DB.Provider.EscapeSqlIdentifier(pdId)} = o.{DB.Provider.EscapeSqlIdentifier(odPersonId)}
-                         WHERE p.{DB.Provider.EscapeSqlIdentifier(pdName)} = @0
+            var sql = $@"SELECT * FROM {od.GetTableName()} o
+                         INNER JOIN {pd.GetTableName()} p ON p.{pdId} = o.{odPersonId}
+                         WHERE p.{pdName} = @0
                          ORDER BY 1 DESC
                          LIMIT 1;";
 
@@ -90,15 +90,15 @@ namespace PetaPoco.Tests.Integration.Databases.SQLite
         {
             AddOrders(1);
 
-            var pd = PocoData.ForType(typeof(Person), DB.DefaultMapper);
-            var od = PocoData.ForType(typeof(Order), DB.DefaultMapper);
-            var pdName = pd.Columns.Values.First(c => c.PropertyInfo.Name == "Name").ColumnName;
-            var odId = od.Columns.Values.First(c => c.PropertyInfo.Name == "Id").ColumnName;
+            var pd = new PocoDataHelper<Person>(DB);
+            var od = new PocoDataHelper<Order>(DB);
+            var pdName = pd.GetColumnName(c => c.Name);
+            var odId = od.GetKeyName();
 
-            var sql = $@"SELECT * FROM {DB.Provider.EscapeTableName(od.TableInfo.TableName)} o
-                         WHERE o.{DB.Provider.EscapeSqlIdentifier(odId)} = @0;
-                         SELECT * FROM {DB.Provider.EscapeTableName(pd.TableInfo.TableName)} p
-                         WHERE p.{DB.Provider.EscapeSqlIdentifier(pdName)} = @1;";
+            var sql = $@"SELECT * FROM {od.GetTableName()} o
+                         WHERE o.{odId} = @0;
+                         SELECT * FROM {pd.GetTableName()} p
+                         WHERE p.{pdName} = @1;";
 
             Order order;
             using (var multi = DB.QueryMultiple(sql, "1", "Peta0"))
@@ -124,19 +124,19 @@ namespace PetaPoco.Tests.Integration.Databases.SQLite
         {
             AddOrders(12);
 
-            var pd = PocoData.ForType(typeof(Person), DB.DefaultMapper);
-            var od = PocoData.ForType(typeof(Order), DB.DefaultMapper);
-            var old = PocoData.ForType(typeof(OrderLine), DB.DefaultMapper);
-            var pdId = pd.Columns.Values.First(c => c.PropertyInfo.Name == "Id").ColumnName;
-            var odId = od.Columns.Values.First(c => c.PropertyInfo.Name == "Id").ColumnName;
-            var odPersonId = od.Columns.Values.First(c => c.PropertyInfo.Name == "PersonId").ColumnName;
-            var oldOrderId = old.Columns.Values.First(c => c.PropertyInfo.Name == "OrderId").ColumnName;
+            var pd = new PocoDataHelper<Person>(DB);
+            var od = new PocoDataHelper<Order>(DB);
+            var old = new PocoDataHelper<OrderLine>(DB);
+            var pdId = pd.GetKeyName();
+            var odId = od.GetKeyName();
+            var odPersonId = od.GetColumnName(c => c.PersonId);
+            var oldOrderId = old.GetColumnName(c => c.OrderId);
 
-            var sql = $@"SELECT * FROM {DB.Provider.EscapeTableName(od.TableInfo.TableName)} o
-                         INNER JOIN {DB.Provider.EscapeTableName(pd.TableInfo.TableName)} p ON p.{DB.Provider.EscapeSqlIdentifier(pdId)} = o.{DB.Provider.EscapeSqlIdentifier(odPersonId)}
-                         ORDER BY o.{DB.Provider.EscapeSqlIdentifier(odId)} ASC;
-                         SELECT * FROM {DB.Provider.EscapeTableName(old.TableInfo.TableName)} ol
-                         ORDER BY ol.{DB.Provider.EscapeSqlIdentifier(oldOrderId)} ASC;";
+            var sql = $@"SELECT * FROM {od.GetTableName()} o
+                         INNER JOIN {pd.GetTableName()} p ON p.{pdId} = o.{odPersonId}
+                         ORDER BY o.{odId} ASC;
+                         SELECT * FROM {old.GetTableName()} ol
+                         ORDER BY ol.{oldOrderId} ASC;";
 
             List<Order> results;
             using (var multi = DB.QueryMultiple(sql))
